@@ -3,159 +3,109 @@ package ua.opnu;
 import java.util.*;
 import java.util.function.*;
 
+public class Main {
+    public static void main(String[] args) {
+        Locale UA = Locale.forLanguageTag("uk");
 
-public class Lab7 {
+        // Початкові дані
+        Lab7.Student[] students = {
+                new Lab7.Student("Поломарчук Богдан", "AI-244", 90, 55, 70), // є борг (55)
+                new Lab7.Student("Шугаєв Роман", "AI-244", 81, 79, 92),
+                new Lab7.Student("Блажко Олександр", "CS-101", 100, 100, 100),
+                new Lab7.Student("Іванов Олег", "CS-102", 59, 60, 61),       // є борг (59)
+                new Lab7.Student("Коваленко Марія", "AI-244", 88, 76, 66)
+        };
 
-    // ===== Допоміжні константи/утиліти =====
-    private static final String[] UA_DIGITS = {
-            "нуль","один","два","три","чотири","п'ять","шість","сім","вісім","дев'ять"
-    };
-
-    // Маленькі утиліти друку (зроблено public для використання у Main)
-    public static void printArray(int[] a) { System.out.println(Arrays.toString(a)); }
-
-    public static void printStudents(Student[] arr) {
-        for (Student s : arr) {
-            System.out.printf("%s %s (%s), avg=%.1f%n",
-                    s.getSurname(), s.getName(), s.getGroup(), s.avg());
-        }
-    }
-
-    // Одноумовна версія фільтра для int[] (утиліта для Task 3)
-    public static int[] filter(int[] data, Predicate<Integer> p) {
-        int cnt = 0;
-        for (int v : data) if (p.test(v)) cnt++;
-        int[] res = new int[cnt];
-        int i = 0;
-        for (int v : data) if (p.test(v)) res[i++] = v;
-        return res;
-    }
-
-    public static class Student {
-        private String fullName;   // формат: "Прізвище Ім'я"
-        private String group;
-        private int[] marks;       // 0..100
-
-        public Student(String fullName, String group, int... marks) {
-            this.fullName = fullName == null ? "" : fullName.trim();
-            this.group = group == null ? "" : group.trim();
-            this.marks = marks == null ? new int[0] : marks.clone();
+        // -------------------------
+        System.out.println("--- Task 1 ---");
+        System.out.println("Predicate<Integer> IS_PRIME: перевірка простих чисел");
+        int[] primeCheck = { -1, 0, 1, 2, 3, 4, 5, 17, 18, 19 };
+        for (int n : primeCheck) {
+            System.out.printf("%d -> %b%n", n, Lab7.IS_PRIME.test(n));
         }
 
-        public String getFullName() { return fullName; }
-        public String getGroup() { return group; }
-        public int[] getMarks() { return marks.clone(); }
+        // -------------------------
+        System.out.println("\n--- Task 2 ---");
+        System.out.println("Фільтрація студентів за предикатом: має ≥1 борг (оцінка < 60)");
+        Predicate<Lab7.Student> hasDebt = Lab7.Student::hasDebt;
+        Predicate<Lab7.Student> noDebt = hasDebt.negate();
 
-        public void setFullName(String fullName) { this.fullName = fullName == null ? "" : fullName.trim(); }
-        public void setGroup(String group) { this.group = group == null ? "" : group.trim(); }
-        public void setMarks(int[] marks) { this.marks = marks == null ? new int[0] : marks.clone(); }
+        Lab7.Student[] debtors = Lab7.filterStudents(students, hasDebt);
+        Lab7.Student[] goodStanding = Lab7.filterStudents(students, noDebt);
 
-        /** Середній бал. */
-        public double avg() {
-            if (marks.length == 0) return 0.0;
-            int sum = 0;
-            for (int m : marks) sum += m;
-            return 1.0 * sum / marks.length;
+        System.out.println("Студенти з боргами:");
+        Lab7.printStudents(debtors);
+
+        System.out.println("Студенти без боргів:");
+        Lab7.printStudents(goodStanding);
+
+        // -------------------------
+        System.out.println("\n--- Task 3 ---");
+        System.out.println("Подвійний фільтр AND для int[]");
+        int[] data = Lab7.range(-6, 21); // [-6..20]
+        System.out.print("Початкові дані: ");
+        Lab7.printArray(data);
+
+        int[] evenAndDiv3 = Lab7.filterAnd(data,
+                n -> n % 2 == 0,
+                n -> n % 3 == 0);
+        System.out.print("Парні І кратні 3: ");
+        Lab7.printArray(evenAndDiv3);
+
+        int[] positiveAndPrime = Lab7.filterAnd(data,
+                n -> n > 0,
+                Lab7.IS_PRIME);
+        System.out.print(">0 І прості: ");
+        Lab7.printArray(positiveAndPrime);
+
+        // -------------------------
+        System.out.println("\n--- Task 4 ---");
+        System.out.println("Consumer<Student>: друк ПРІЗВИЩЕ ІМ'Я (UPPERCASE)");
+        Consumer<Lab7.Student> upperFio = s ->
+                System.out.println((s.getSurname() + " " + s.getName()).toUpperCase(UA));
+        Lab7.forEach(students, upperFio);
+
+        // -------------------------
+        System.out.println("\n--- Task 5 ---");
+        System.out.println("doIf(int[], Predicate, Consumer): приклади");
+        int[] d2 = { -3, -2, -1, 0, 1, 2, 3, 4, 5, 6 };
+
+        System.out.println("Парні числа:");
+        Lab7.doIf(d2, n -> n % 2 == 0, System.out::println);
+
+        System.out.println("Негативні числа з підписом:");
+        Lab7.doIf(d2, n -> n < 0, n -> System.out.println(n + " — negative"));
+
+        // -------------------------
+        System.out.println("\n--- Task 6 ---");
+        System.out.println("Function<Integer,Integer>: 2^n для масиву (негативні -> 0 після (int)касту)");
+        int[] exps = { -3, -1, 0, 1, 2, 3, 4, 5, 8, 10 };
+        System.out.print("n: ");
+        Lab7.printArray(exps);
+
+        Function<Integer, Integer> pow2 = n -> (int) Math.pow(2, n);
+        int[] powVals = Lab7.processIntArray(exps, pow2);
+        System.out.print("2^n: ");
+        Lab7.printArray(powVals);
+
+        // -------------------------
+        System.out.println("\n--- Task 7 ---");
+        System.out.println("stringify(int[], Function<Integer,String>): словник 0..9 українською");
+        int[] digits = Lab7.range(0, 10); // [0..9]
+        Function<Integer, String> digitsUa = Lab7.digitsUa();
+        String[] named = Lab7.stringify(digits, digitsUa);
+        System.out.println(Arrays.toString(named));
+
+        // -------------------------
+        System.out.println("\n--- Optional: SortingList (топ-3) ---");
+        List<Lab7.Student> list = new ArrayList<>(Arrays.asList(students));
+        list.sort(Comparator
+                .comparingDouble(Lab7.Student::avg).reversed()
+                .thenComparing(Lab7.Student::getSurname));
+        for (int i = 0; i < Math.min(3, list.size()); i++) {
+            Lab7.Student s = list.get(i);
+            System.out.printf("%d) %s %s (%s), avg=%.1f%n",
+                    i + 1, s.getSurname(), s.getName(), s.getGroup(), s.avg());
         }
-
-        /** true, якщо є оцінка < 60 (борг). */
-        public boolean hasDebt() {
-            for (int m : marks) if (m < 60) return true;
-            return false;
-        }
-
-        /** Перше слово з fullName. */
-        public String getSurname() {
-            String[] parts = fullName.split("\\s+");
-            return parts.length > 0 ? parts[0] : "";
-        }
-
-        /** Друге слово з fullName (або усе після першого). */
-        public String getName() {
-            String[] parts = fullName.split("\\s+");
-            if (parts.length <= 1) return "";
-            if (parts.length == 2) return parts[1];
-            StringBuilder sb = new StringBuilder();
-            for (int i = 1; i < parts.length; i++) {
-                if (i > 1) sb.append(' ');
-                sb.append(parts[i]);
-            }
-            return sb.toString();
-        }
-    }
-
-    // ====== Реалізація завдань ======
-
-    // Task 1 — Predicate: просте число
-    // Пояснення: метод перевіряє простоту числа пробним діленням до sqrt(n).
-    public static final Predicate<Integer> IS_PRIME = Lab7::isPrime;
-
-    public static boolean isPrime(int n) {
-        if (n < 2) return false;
-        if (n == 2) return true;
-        if (n % 2 == 0) return false;
-        int lim = (int)Math.sqrt(n);
-        for (int d = 3; d <= lim; d += 2) {
-            if (n % d == 0) return false;
-        }
-        return true;
-    }
-
-    // Task 2 — Фільтрація студентів Predicate<Student>
-    // Пояснення: повертаємо новий масив студентів, що задовольняють предикат.
-    public static Student[] filterStudents(Student[] arr, Predicate<Student> p) {
-        int cnt = 0;
-        for (Student s : arr) if (p.test(s)) cnt++;
-        Student[] res = new Student[cnt];
-        int i = 0;
-        for (Student s : arr) if (p.test(s)) res[i++] = s;
-        return res;
-    }
-
-    // Task 3 — Подвійний фільтр (AND двох предикатів) для int[]
-    // Пояснення: пропускаємо елемент лише якщо обидва предикати p1 і p2 істинні.
-    public static int[] filterAnd(int[] data, Predicate<Integer> p1, Predicate<Integer> p2) {
-        return filter(data, p1.and(p2));
-    }
-
-    // Task 4 — Consumer<Student> + forEach
-    // Пояснення: застосовуємо дію до кожного студента (аналог простого foreach).
-    public static void forEach(Student[] arr, Consumer<Student> action) {
-        for (Student s : arr) action.accept(s);
-    }
-
-    // Task 5 — doIf: Predicate + Consumer для int[]
-    // Пояснення: виконуємо дію лише для елементів, що задовольняють умову.
-    public static void doIf(int[] data, Predicate<Integer> cond, Consumer<Integer> action) {
-        for (int v : data) if (cond.test(v)) action.accept(v);
-    }
-
-    // Task 6 — Function<Integer,Integer> (2^n) для int[]
-    // Пояснення: застосовуємо функцію до кожного елемента та повертаємо новий масив.
-    public static int[] processIntArray(int[] arr, Function<Integer, Integer> f) {
-        int[] out = new int[arr.length];
-        for (int i = 0; i < arr.length; i++) out[i] = f.apply(arr[i]);
-        return out;
-    }
-
-    // Task 7 — stringify() + словник числівників
-    // Пояснення: відображаємо елементи масиву у рядки за допомогою словника-функції.
-    public static String[] stringify(int[] arr, Function<Integer, String> dict) {
-        String[] out = new String[arr.length];
-        for (int i = 0; i < arr.length; i++) out[i] = dict.apply(arr[i]);
-        return out;
-    }
-
-    /** Повертає словникову функцію 0..9 -> українські назви. */
-    public static Function<Integer,String> digitsUa() {
-        return n -> (n >= 0 && n <= 9) ? UA_DIGITS[n] : "?";
-    }
-
-    /** Створює масив [from..toExclusive-1]. */
-    public static int[] range(int from, int toExclusive) {
-        int n = Math.max(0, toExclusive - from);
-        int[] a = new int[n];
-        for (int i = 0, v = from; i < n; i++, v++) a[i] = v;
-        return a;
     }
 }
